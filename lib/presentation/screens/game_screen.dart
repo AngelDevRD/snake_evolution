@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -74,9 +76,14 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   @override
   Widget build(BuildContext context) {
-    final runState = ref.watch(gameProvider);
+    // Only the map (grid dimensions) is watched here: it's fixed for the
+    // whole run (set once in startGame from the board-size setting), so this
+    // doesn't cause a rebuild on every tick. Per-tick game state is read by
+    // the narrow Consumer widgets below (score, board, effects bar) so the
+    // rest of this tree (Scaffold chrome, DpadControls, layout math) is only
+    // rebuilt when the map or skin actually change, not 5-10 times/second.
+    final map = ref.watch(gameProvider.select((s) => s.map));
     final skin = skinById(ref.watch(progressProvider).selectedSkinId);
-    final map = GameMapDef.byId(widget.mapId);
 
     ref.listen(gameProvider, (previous, next) {
       _maybeTriggerParticle(next.game);
@@ -89,31 +96,58 @@ class _GameScreenState extends ConsumerState<GameScreen>
     });
 
     return Scaffold(
-      appBar: AppBar(title: Text('Puntaje: ${runState.game.score}')),
+      appBar: AppBar(
+        title: Consumer(
+          builder: (context, ref, _) {
+            final score = ref.watch(gameProvider.select((s) => s.game.score));
+            return Text('Puntaje: $score');
+          },
+        ),
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 700;
-            final boardSize = isWide
-                ? constraints.maxHeight - 32
-                : constraints.maxWidth - 32;
+            final isWide = constraints.maxWidth > constraints.maxHeight;
+            // Reserve room for the effects bar and dpad controls so the
+            // square board fills the rest of the available space without
+            // overflowing or leaving dead margins, on any device size or
+            // board grid dimension. The board is always the smaller of the
+            // two available dimensions once chrome is subtracted, so cells
+            // stay perfectly square.
+            const effectsBarReserve = 32.0;
+            const controlsReserve = 200.0;
+            final mainAxisAvailable = isWide
+                ? constraints.maxHeight - effectsBarReserve
+                : constraints.maxWidth;
+            final crossAxisAvailable = isWide
+                ? constraints.maxWidth - controlsReserve
+                : constraints.maxHeight - effectsBarReserve - controlsReserve;
+            final boardSize = math.max(
+              0.0,
+              math.min(mainAxisAvailable, crossAxisAvailable),
+            );
 
             final board = GestureDetector(
               onPanUpdate: _handlePan,
               child: SizedBox(
                 width: boardSize,
                 height: boardSize,
-                child: AnimatedBuilder(
-                  animation: _particleController,
-                  builder: (context, _) {
-                    return CustomPaint(
-                      painter: GameGridPainter(
-                        game: runState.game,
-                        map: map,
-                        skin: skin,
-                        particleProgress: _particleController.value,
-                        particleActive: _particleActive,
-                      ),
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final game = ref.watch(gameProvider.select((s) => s.game));
+                    return AnimatedBuilder(
+                      animation: _particleController,
+                      builder: (context, _) {
+                        return CustomPaint(
+                          painter: GameGridPainter(
+                            game: game,
+                            map: map,
+                            skin: skin,
+                            particleProgress: _particleController.value,
+                            particleActive: _particleActive,
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -128,7 +162,14 @@ class _GameScreenState extends ConsumerState<GameScreen>
               ),
             );
 
-            final effectsBar = ActiveEffectsBar(effects: runState.game.effects);
+            final effectsBar = Consumer(
+              builder: (context, ref, _) {
+                final effects = ref.watch(
+                  gameProvider.select((s) => s.game.effects),
+                );
+                return ActiveEffectsBar(effects: effects);
+              },
+            );
 
             if (isWide) {
               return Row(

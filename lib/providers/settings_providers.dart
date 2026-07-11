@@ -9,6 +9,8 @@ class SettingsState {
   final bool musicEnabled;
   final bool hapticsEnabled;
   final bool tutorialSeen;
+  final SpeedLevel speed;
+  final BoardSizeLevel boardSize;
 
   const SettingsState({
     required this.theme,
@@ -16,6 +18,8 @@ class SettingsState {
     required this.musicEnabled,
     required this.hapticsEnabled,
     required this.tutorialSeen,
+    required this.speed,
+    required this.boardSize,
   });
 
   SettingsState copyWith({
@@ -24,12 +28,16 @@ class SettingsState {
     bool? musicEnabled,
     bool? hapticsEnabled,
     bool? tutorialSeen,
+    SpeedLevel? speed,
+    BoardSizeLevel? boardSize,
   }) => SettingsState(
     theme: theme ?? this.theme,
     soundEnabled: soundEnabled ?? this.soundEnabled,
     musicEnabled: musicEnabled ?? this.musicEnabled,
     hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
     tutorialSeen: tutorialSeen ?? this.tutorialSeen,
+    speed: speed ?? this.speed,
+    boardSize: boardSize ?? this.boardSize,
   );
 }
 
@@ -44,6 +52,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
           musicEnabled: _repo.musicEnabled,
           hapticsEnabled: _repo.hapticsEnabled,
           tutorialSeen: _repo.tutorialSeen,
+          speed: _repo.speed,
+          boardSize: _repo.boardSize,
         ),
       );
 
@@ -70,6 +80,16 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setTutorialSeen(bool value) async {
     await _repo.setTutorialSeen(value);
     state = state.copyWith(tutorialSeen: value);
+  }
+
+  Future<void> setSpeed(SpeedLevel value) async {
+    await _repo.setSpeed(value);
+    state = state.copyWith(speed: value);
+  }
+
+  Future<void> setBoardSize(BoardSizeLevel value) async {
+    await _repo.setBoardSize(value);
+    state = state.copyWith(boardSize: value);
   }
 }
 

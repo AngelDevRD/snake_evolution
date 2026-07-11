@@ -39,6 +39,48 @@ class SettingsScreen extends ConsumerWidget {
               onSelectionChanged: (value) => notifier.setTheme(value.first),
             ),
           ),
+          ListTile(
+            title: const Text('Velocidad'),
+            subtitle: Text(settings.speed.label),
+            leading: const Icon(Icons.speed),
+            trailing: DropdownButton<SpeedLevel>(
+              value: settings.speed,
+              underline: const SizedBox.shrink(),
+              items: SpeedLevel.values
+                  .map(
+                    (level) => DropdownMenuItem(
+                      value: level,
+                      child: Text(level.label),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) notifier.setSpeed(value);
+              },
+            ),
+          ),
+          ListTile(
+            title: const Text('Tamaño del tablero'),
+            subtitle: Text(
+              '${settings.boardSize.label} (${settings.boardSize.cells}x${settings.boardSize.cells})',
+            ),
+            leading: const Icon(Icons.grid_4x4),
+            trailing: DropdownButton<BoardSizeLevel>(
+              value: settings.boardSize,
+              underline: const SizedBox.shrink(),
+              items: BoardSizeLevel.values
+                  .map(
+                    (level) => DropdownMenuItem(
+                      value: level,
+                      child: Text(level.label),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) notifier.setBoardSize(value);
+              },
+            ),
+          ),
           SwitchListTile(
             title: const Text('Sonido'),
             secondary: const Icon(Icons.volume_up),

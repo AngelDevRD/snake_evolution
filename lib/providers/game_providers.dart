@@ -43,8 +43,6 @@ class GameNotifier extends StateNotifier<GameRunState> {
   int _tickCount = 0;
   late GameEngine _engine;
 
-  static const _baseTickMs = 160;
-
   GameNotifier(this.ref)
     : _engine = GameEngine(GameMapDef.classicArena()),
       super(
@@ -56,7 +54,8 @@ class GameNotifier extends StateNotifier<GameRunState> {
 
   void startGame(MapId mapId) {
     _timer?.cancel();
-    final map = GameMapDef.byId(mapId);
+    final boardSize = ref.read(settingsProvider).boardSize.cells;
+    final map = GameMapDef.byId(mapId, size: boardSize);
     _engine = GameEngine(map);
     _tickCount = 0;
     _queuedDirection = null;
@@ -73,9 +72,10 @@ class GameNotifier extends StateNotifier<GameRunState> {
   }
 
   void _scheduleTick() {
+    final baseTickMs = ref.read(settingsProvider).speed.tickMs;
     final ms = state.game.effects.isSpeedActive
-        ? (_baseTickMs * 0.55).round()
-        : _baseTickMs;
+        ? (baseTickMs * 0.55).round()
+        : baseTickMs;
     _timer = Timer(Duration(milliseconds: ms), _tick);
   }
 

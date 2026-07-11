@@ -19,50 +19,52 @@ class GameMapDef {
 
   static const int defaultSize = 20;
 
-  static GameMapDef classicArena() => const GameMapDef(
+  static GameMapDef classicArena({int size = defaultSize}) => GameMapDef(
     id: MapId.classicArena,
     name: 'Arena Clásica',
-    width: defaultSize,
-    height: defaultSize,
-    obstacles: [],
+    width: size,
+    height: size,
+    obstacles: const [],
   );
 
-  // Fixed symmetric obstacle pattern: a cross of four block clusters,
-  // kept away from the center spawn point so the snake never starts blocked in.
-  static GameMapDef obstacleField() {
-    final obstacles = <Position>[];
-    const w = defaultSize;
-    const h = defaultSize;
+  // Symmetric obstacle pattern: a cross of four block clusters near the
+  // quarter-points of the board, kept away from the center spawn point so
+  // the snake never starts blocked in. The margin scales with board size
+  // (quarter-point based) so the safe gap around the center spawn row/col
+  // is preserved on every board-size option, not just the default 20x20.
+  static GameMapDef obstacleField({int size = defaultSize}) {
+    final w = size;
+    final h = size;
+    final q = (size / 4).floor().clamp(2, size);
     final blocks = [
-      const Position(5, 5),
-      const Position(6, 5),
-      const Position(5, 6),
-      Position(w - 6, 5),
-      Position(w - 7, 5),
-      Position(w - 6, 6),
-      Position(5, h - 6),
-      Position(6, h - 6),
-      Position(5, h - 7),
-      Position(w - 6, h - 6),
-      Position(w - 7, h - 6),
-      Position(w - 6, h - 7),
+      Position(q, q),
+      Position(q + 1, q),
+      Position(q, q + 1),
+      Position(w - 1 - q, q),
+      Position(w - 2 - q, q),
+      Position(w - 1 - q, q + 1),
+      Position(q, h - 1 - q),
+      Position(q + 1, h - 1 - q),
+      Position(q, h - 2 - q),
+      Position(w - 1 - q, h - 1 - q),
+      Position(w - 2 - q, h - 1 - q),
+      Position(w - 1 - q, h - 2 - q),
     ];
-    obstacles.addAll(blocks);
     return GameMapDef(
       id: MapId.obstacleField,
       name: 'Campo de Obstáculos',
       width: w,
       height: h,
-      obstacles: obstacles,
+      obstacles: blocks,
     );
   }
 
-  static GameMapDef byId(MapId id) {
+  static GameMapDef byId(MapId id, {int size = defaultSize}) {
     switch (id) {
       case MapId.classicArena:
-        return classicArena();
+        return classicArena(size: size);
       case MapId.obstacleField:
-        return obstacleField();
+        return obstacleField(size: size);
     }
   }
 
