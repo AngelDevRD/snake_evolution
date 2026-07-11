@@ -2,15 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/app_updater.dart';
 import '../../providers/progress_providers.dart';
 import '../../providers/settings_providers.dart';
 import '../widgets/tutorial_overlay.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        AppUpdater.checkForUpdate(context, slug: 'snake-evolution');
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final progress = ref.watch(progressProvider);
     final settings = ref.watch(settingsProvider);
 
